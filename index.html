@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Anual de Rendimiento en Corte y Confección</title>
+    <!-- Carga de Tailwind CSS CDN para estilos -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Configuración para usar la fuente Inter y el esquema de color oscuro -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a1a1a; /* Negro suave de fondo */
+            min-height: 100vh;
+        }
+        .dashboard-container {
+            background-color: #000000; /* Fondo negro puro */
+            color: #f3f3f3; /* Texto claro */
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4); /* Sombra violeta para acentuar */
+        }
+        /* Estilo para el texto descriptivo */
+        #description-text {
+            border-left: 4px solid #d946ef; /* Borde fucsia */
+        }
+    </style>
+    <!-- Carga de Chart.js CDN para gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="dashboard-container max-w-5xl mx-auto p-6 md:p-10 rounded-xl">
+        
+        <!-- Título e Introducción -->
+        <header class="mb-8 border-b border-violet-800 pb-4">
+            <h1 class="text-3xl font-extrabold text-fuchsia-400 mb-2">Rendimiento Anual en Proyectos de Corte y Confección</h1>
+            <p class="text-gray-400">Analice la tasa de defectos promedio por tipo de proyecto, utilizando el filtro de año.</p>
+        </header>
+
+        <!-- Controles y Filtro (Barra Superior) -->
+        <div class="mb-8 flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-8">
+            <div class="flex items-center space-x-4">
+                <label for="year-selector" class="font-medium text-violet-400">Filtrar por Año:</label>
+                <select id="year-selector" 
+                        class="p-2 border border-violet-600 bg-gray-900 text-gray-100 rounded-lg shadow-md focus:ring-fuchsia-500 focus:border-fuchsia-500 transition duration-150">
+                    <option value="2025">2025 (Parcial)</option>
+                    <option value="2024">2024</option>
+                    <option value="2023">2023</option>
+                </select>
+            </div>
+            
+            <!-- Contenedor para el Texto Descriptivo -->
+            <div id="description-text" class="flex-grow p-3 bg-gray-900 rounded-md shadow-inner">
+                <p class="text-sm text-gray-300 italic"></p>
+            </div>
+        </div>
+
+        <!-- Contenedor del Gráfico -->
+        <div class="chart-container bg-gray-900 p-6 rounded-lg border border-violet-900">
+            <canvas id="performanceChart"></canvas>
+        </div>
+
+    </div>
+
+    <script>
+        // Definición de los datos simulados organizados por año
+        const annualData = {
+            '2025': {
+                labels: ['Vestido Sencillo', 'Falda Plisada', 'Chaqueta Blazer', 'Pantalón Formal'],
+                data: [8, 10, 15, 5], // Tasa de Defecto (%)
+                title: 'Tasa de Defecto Promedio por Proyecto (2025 - Parcial)',
+                description: 'Las mejoras continuaron en 2025. El **Pantalón Formal** tiene la menor tasa de defectos (5%), lo que refleja un alto dominio en la técnica de cierres invisibles. La Chaqueta sigue siendo el proyecto más desafiante.'
+            },
+            '2024': {
+                labels: ['Vestido Sencillo', 'Falda Plisada', 'Chaqueta Blazer', 'Pantalón Formal'],
+                data: [10, 18, 20, 12], // Tasa de Defecto (%)
+                title: 'Tasa de Defecto Promedio por Proyecto (2024)',
+                description: 'La tasa de defectos se redujo significativamente en la Chaqueta Blazer en 2024, sugiriendo una mejora en la instrucción de ensamblaje. La **Falda Plisada** (18%) es ahora el segundo desafío, posiblemente por la precisión de los pliegues.'
+            },
+            '2023': {
+                labels: ['Vestido Sencillo', 'Falda Plisada', 'Chaqueta Blazer', 'Pantalón Formal'],
+                data: [15, 25, 40, 10], // Tasa de Defecto (%)
+                title: 'Tasa de Defecto Promedio por Proyecto (2023)',
+                description: 'En 2023, la **Chaqueta Blazer** (40%) presentó la mayor tasa de defectos, indicando serias dificultades en el ensamblaje de cuellos, solapas y mangas. El Pantalón tuvo un buen rendimiento ese año.'
+            }
+        };
+
+        let currentChart = null; // Variable para almacenar la instancia del gráfico
+
+        // Función para actualizar el texto descriptivo
+        function updateDescription(data) {
+            const descElement = document.querySelector('#description-text p');
+            descElement.innerHTML = data.description;
+        }
+
+        // Función para renderizar o actualizar el gráfico
+        function renderChart(year) {
+            const chartData = annualData[year];
+            
+            // Si ya existe un gráfico, destrúyelo antes de crear uno nuevo
+            if (currentChart) {
+                currentChart.destroy();
+            }
+
+            // Actualizar el texto descriptivo
+            updateDescription(chartData);
+
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            
+            // Crear la nueva instancia del gráfico de Barras
+            currentChart = new Chart(ctx, {
+                type: 'bar', // Tipo fijo: Bar chart
+                data: {
+                    labels: chartData.labels,
+                    datasets: [{
+                        label: 'Tasa de Defecto Promedio (%)',
+                        data: chartData.data,
+                        backgroundColor: '#d946ef', // Fuchsia 600
+                        borderColor: '#8b5cf6', // Violet 500
+                        borderWidth: 1.5,
+                        borderRadius: 5,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false, 
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                color: '#f3f3f3', // Leyenda en color claro
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: chartData.title,
+                            color: '#f3f3f3', // Título del gráfico en color claro
+                            font: { size: 18, weight: 'bold' }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 50, // Límite máximo para porcentaje
+                            ticks: {
+                                color: '#a1a1aa' // Ticks del eje Y
+                            },
+                            grid: {
+                                color: 'rgba(50, 50, 50, 0.5)' // Líneas de cuadrícula sutiles
+                            },
+                            title: {
+                                display: true,
+                                text: 'Tasa de Defecto (%)',
+                                color: '#c4b5fd' // Violeta claro para el título
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#a1a1aa' // Ticks del eje X
+                            },
+                            grid: {
+                                display: false // Ocultar líneas verticales
+                            },
+                            title: {
+                                display: true,
+                                text: 'Tipo de Proyecto',
+                                color: '#c4b5fd'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Inicializar al cargar la página
+        window.onload = function() {
+            // Establecer la altura del contenedor
+            document.querySelector('.chart-container').style.height = '450px'; 
+            
+            const selector = document.getElementById('year-selector');
+            
+            // Renderizar la vista inicial (año más reciente)
+            renderChart(selector.value); 
+
+            // Añadir el listener para el cambio de filtro
+            selector.addEventListener('change', (event) => {
+                renderChart(event.target.value);
+            });
+        };
+    </script>
+
+</body>
+</html>
+
